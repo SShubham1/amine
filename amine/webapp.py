@@ -2,8 +2,15 @@ import sys
 import time
 import sqlite3
 import logging
+import os
 import keyboard
-import winsound
+# if os is windows will import winsound else beepy
+if os.name == "nt":
+    import winsound
+    import pygetwindow as gw
+else:
+    import beepy
+    import pywinctl as gw
 import pyautogui
 import threading
 import subprocess
@@ -12,7 +19,6 @@ import matplotlib
 import pandas as pd
 import seaborn as sns
 from io import BytesIO
-import pygetwindow as gw
 from flask import send_file
 import plotly.express as px
 from plyer import notification
@@ -21,7 +27,6 @@ from flaskwebgui import FlaskUI
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify
-import os
 import validators
 import requests
 
@@ -70,6 +75,12 @@ def setup_logging():
 
     return logger
 
+# os depended beep
+def amine_beep():
+    if os.name == "nt":
+        winsound.Beep(500, 500)
+    else:
+        beepy.beep(4)
 
 logger = setup_logging()
 
@@ -91,7 +102,7 @@ class FocusProtection:
             if event.name in self.config["BLOCKED_KEYS"]:
                 logger.warning(f"Attempted To Press Blocked Key : {event.name}")
                 log_distraction(self.session_id, f"Blocked Key Press : {event.name}")
-                winsound.Beep(500, 500)
+                amine_beep()
 
         keyboard.hook(on_key_event)
 
@@ -537,13 +548,13 @@ def pomodoro_flow(pomodoros, focus_duration, break_duration, link, link_type):
     focus_protection = FocusProtection(session_id=session_id)
 
     for i in range(pomodoros):
-        winsound.Beep(500, 500)
+        amine_beep()
         notify_user(f"Starting Pomodoro {i + 1}/{pomodoros}")
         logger.info(f"Starting Pomodoro {i + 1}/{pomodoros}")
         focus_protection.start_protection(focus_duration)
 
         if i < pomodoros - 1:
-            winsound.Beep(500, 500)
+            amine_beep()
             notify_user("Break time!")
             logger.info(f"Break: {break_duration} minutes")
             time.sleep(break_duration * 60)
